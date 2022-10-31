@@ -36,7 +36,7 @@ public class ClientController {
                 : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @GetMapping(value = "/clients?id={id}")
+    @GetMapping(value = "/clients/{id}")
     public ResponseEntity<Client> read(@PathVariable(name = "id") int id) {
         final Client client = clientRepository.findById(id).orElse(null);
 
@@ -45,7 +45,7 @@ public class ClientController {
                 : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @PutMapping(value = "/clients?id={id}")
+    @PutMapping(value = "/clients/{id}")
     public ResponseEntity<?> update(@RequestBody Client client, @PathVariable(name = "id") int id) {
         if (clientRepository.existsById(id)) {
             client.setId(id);
@@ -55,7 +55,7 @@ public class ClientController {
         return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
     }
 
-    @DeleteMapping(value = "/clients?id={id}")
+    @DeleteMapping(value = "/clients/{id}")
     public ResponseEntity<?> delete(@PathVariable(name = "id") int id) {
         if (clientRepository.existsById(id)) {
             clientRepository.deleteById(id);
