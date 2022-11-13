@@ -14,6 +14,7 @@ import javax.persistence.Table;
 @Table(name = "clients")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Client {
+
     @Id
     @Column(name = "id")
     @SequenceGenerator(name = "clientsIdSeq", sequenceName = "clients_id_seq", allocationSize = 1)
