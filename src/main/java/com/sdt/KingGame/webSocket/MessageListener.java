@@ -1,9 +1,9 @@
 package com.sdt.KingGame.webSocket;
 
-import com.badlogic.gdx.utils.JsonValue;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdt.KingGame.model.Client;
 import com.sdt.KingGame.repository.ClientRepository;
+import org.json.JSONObject;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -11,7 +11,8 @@ import java.io.IOException;
 
 public class MessageListener {
     public MessageListener() {}
-    public void handle(WebSocketSession session, JsonValue jsonValue, ClientRepository clientRepository) throws IOException {
+
+    public void handle(WebSocketSession session, JSONObject jsonValue, ClientRepository clientRepository) throws IOException {
         String method = jsonValue.getString("method");
         switch (method) {
             case "add" -> {

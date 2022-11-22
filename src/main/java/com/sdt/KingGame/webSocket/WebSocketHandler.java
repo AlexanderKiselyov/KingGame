@@ -1,11 +1,9 @@
 package com.sdt.KingGame.webSocket;
 
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.JsonReader;
-import com.badlogic.gdx.utils.JsonValue;
 import com.sdt.KingGame.game.GameSession;
 import com.sdt.KingGame.repository.ClientRepository;
-import com.sun.istack.NotNull;
+import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -28,7 +26,6 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
     private DisconnectListener disconnectListener = new DisconnectListener();
     private MessageListener messageListener = new MessageListener();
     private final ClientRepository clientRepository;
-    private final JsonReader reader = new JsonReader();
 
     public WebSocketHandler(ClientRepository clientRepository) {
         this.clientRepository = clientRepository;
@@ -49,18 +46,18 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
                 queueSession.clear();
             }
             sessions.add(session);
-            connectListener.handle(session);
         }
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
-        messageListener.handle(session, reader.parse(message.getPayload()), clientRepository);
+        messageListener.handle(session, new JSONObject(message.getPayload()), clientRepository);
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         synchronized (sessions) {
+            queueSession.remove(session);
             sessions.removeValue(session, true);
             disconnectListener.handle(session);
         }
