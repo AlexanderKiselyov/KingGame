@@ -38,7 +38,7 @@ public class MessageListener {
                 session.sendMessage(new TextMessage("Client with id " + id + "was not deleted."));
                 break;
             }
-            case default: {
+            default: {
                 session.sendMessage(new TextMessage("Cannot handle request."));
                 break;
             }
