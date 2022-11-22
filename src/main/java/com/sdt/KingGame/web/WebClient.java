@@ -1,4 +1,4 @@
-package com.sdt.KingGame.html;
+package com.sdt.KingGame.web;
 
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketHttpHeaders;
@@ -12,7 +12,12 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 
-public class HtmlClient {
+/**
+ *
+ * A web client for server functionality testing
+ *
+ */
+public class WebClient {
 
     public static void main(String[] args) {
         try {
