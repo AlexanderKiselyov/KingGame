@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class Deck {
-    private final ArrayList<Card> deck;
+    private final List<Card> deck;
 
     public Deck() {
         deck = new ArrayList<>();
@@ -23,11 +23,10 @@ public class Deck {
         shuffle();
     }
 
-    private Card dealTopCard() {
+    public Card dealTopCard() {
         if (deck.size() > 0) {
             return deck.remove(0);
-        }
-        else {
+        } else {
             return null;
         }
     }

@@ -1,5 +1,6 @@
 package com.sdt.KingGame.web;
 
+import org.json.JSONObject;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.WebSocketSession;
@@ -15,23 +16,28 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
  * A web client for server functionality testing
- *
  */
 public class WebClient {
-    private static final int CLIENTS_COUNT = 5;
+    private static final int CLIENTS_COUNT = 4;
 
     public static void main(String[] args) {
         try {
             List<WebSocketSession> clientsSessions = new CopyOnWriteArrayList<>();
+            List<String> sessionsId = new CopyOnWriteArrayList<>();
             for (int i = 0; i < CLIENTS_COUNT; i++) {
                 WebSocketClient webSocketClient = new StandardWebSocketClient();
 
                 WebSocketSession webSocketSession = webSocketClient.doHandshake(new TextWebSocketHandler() {
                     @Override
                     public void handleTextMessage(WebSocketSession session, TextMessage message) {
-                        System.out.println("received message - " + message.getPayload());
+                        String messageText = message.getPayload();
+                        if (messageText.contains("session_id") && !messageText.contains("game_session_id")) {
+                            JSONObject messageJson = new JSONObject(messageText);
+                            System.out.println(messageText);
+                            sessionsId.add(messageJson.getString("session_id"));
+                        }
+                        System.out.println("received message - " + messageText);
                     }
 
                     @Override
@@ -42,10 +48,14 @@ public class WebClient {
                 clientsSessions.add(webSocketSession);
             }
 
-            TextMessage message = new TextMessage("{ \"method\" : \"all\" }");
-            ExecutorService service = Executors.newFixedThreadPool(3);
+            ExecutorService service = Executors.newFixedThreadPool(5);
             for (int i = 0; i < CLIENTS_COUNT; i++) {
                 WebSocketSession session = clientsSessions.get(i);
+                TextMessage message = new TextMessage("{\n" +
+                        "    \"session_id\" : " + sessionsId.get(i) + ",\n" +
+                        "    \"player_name\" : \"ABC\",\n" +
+                        "    \"action\" : \"play\"\n" +
+                        "}");
                 service.execute(() -> {
                     try {
                         session.sendMessage(message);

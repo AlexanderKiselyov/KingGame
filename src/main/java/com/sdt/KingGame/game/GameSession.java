@@ -1,31 +1,24 @@
 package com.sdt.KingGame.game;
 
-import org.springframework.web.socket.WebSocketSession;
+import com.sdt.KingGame.state.GameState;
+import com.sdt.KingGame.state.StartedGameState;
 
 import java.util.List;
 
 /**
- *
  * Class for the game session
- *
  */
 public class GameSession {
     private final Long gameSessionId;
-    private final List<WebSocketSession> playersSessions;
     private final GameState state;
 
-    public GameSession(Long gameSessionId, List<WebSocketSession> playersSessions) {
+    public GameSession(Long gameSessionId, List<Player> players) {
         this.gameSessionId = gameSessionId;
-        this.playersSessions = playersSessions;
-        state = new GameState();
+        state = new StartedGameState(players, new Deck());
     }
 
     public Long getGameSessionId() {
         return gameSessionId;
-    }
-
-    public List<WebSocketSession> getPlayersSessions() {
-        return playersSessions;
     }
 
     public GameState getState() {

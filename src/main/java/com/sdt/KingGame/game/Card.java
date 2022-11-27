@@ -1,22 +1,26 @@
 package com.sdt.KingGame.game;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Arrays;
 import java.util.List;
 
 public class Card {
     private String suit;
-    private int magnitude;
+    private Integer magnitude;
+    private static final Logger LOGGER = LoggerFactory.getLogger(Card.class);
 
-    public Card(String suit, int magnitude) {
+    public Card(String suit, Integer magnitude) {
         setMagnitude(magnitude);
         setSuit(suit);
     }
 
-    private String getSuit() {
+    public String getSuit() {
         return suit;
     }
 
-    private int getMagnitude() {
+    public int getMagnitude() {
         return magnitude;
     }
 
@@ -25,16 +29,16 @@ public class Card {
         if (validSuits.contains(suit)) {
             this.suit = suit;
         } else {
-            throw new IllegalArgumentException("Valid suits are: " + validSuits);
+            LOGGER.error("Valid suits are: " + validSuits);
         }
     }
 
-    private void setMagnitude(int magnitude) {
+    private void setMagnitude(Integer magnitude) {
         List<Integer> validMagnitudes = getValidMagnitude();
         if (validMagnitudes.contains(magnitude)) {
             this.magnitude = magnitude;
         } else {
-            throw new IllegalArgumentException("Valid magnitudes are: " + validMagnitudes);
+            LOGGER.error("Valid magnitudes are: " + validMagnitudes);
         }
     }
 
