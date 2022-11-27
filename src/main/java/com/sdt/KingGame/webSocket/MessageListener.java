@@ -33,7 +33,7 @@ public class MessageListener {
             String action = jsonValue.getString("action");
             switch (action) {
                 case "play" -> playAction(session, jsonValue, gameSessions);
-                case "turn" -> turnAction(session, jsonValue, gameSessions);
+                case "turn" -> turnAction(jsonValue, gameSessions);
                 case "pause" -> {
                     // TODO логика обработки паузы (пауза одного игроков или потеря соединения с одним из игроков)
                 }
@@ -71,7 +71,7 @@ public class MessageListener {
         }
     }
 
-    private void turnAction(WebSocketSession session, JSONObject jsonValue, List<GameSession> gameSessions) throws IOException {
+    private void turnAction(JSONObject jsonValue, List<GameSession> gameSessions) throws IOException {
         Long gameSessionId = jsonValue.getLong("game_session_id");
         GameSession currentGameSession = null;
         for (GameSession gameSession : gameSessions) {

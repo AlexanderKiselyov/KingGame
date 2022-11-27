@@ -25,9 +25,6 @@ import java.util.Map;
 public class MessageGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageGenerator.class);
 
-    public MessageGenerator() {
-    }
-
     public void generateMessage(GameSession gameSession) throws IOException {
         GameState state = gameSession.getState();
         Map<Player, List<Card>> playersWithCards = state.getPlayersWithCards();
@@ -35,13 +32,16 @@ public class MessageGenerator {
             JSONObject message = new JSONObject();
             message.put("game_session_id", gameSession.getGameSessionId());
             JSONObject gameState = new JSONObject();
-            switch (state) {
-                case StartedGameState startedGameState ->
-                        startedState(state, playersWithCards, player, gameState, startedGameState);
-                case PausedGameState pausedGameState -> pausedState(state, gameState, pausedGameState);
-                case CancelledGameState cancelledGameState -> cancelledState(state, gameState, cancelledGameState);
-                case FinishedGameState finishedGameState -> finishedState(gameState, finishedGameState);
-                default -> LOGGER.error("Unexpected value: " + state.state);
+            if (state instanceof StartedGameState) {
+                startedState(playersWithCards, player, gameState, (StartedGameState) state);
+            } else if (state instanceof PausedGameState) {
+                pausedState(gameState, (PausedGameState) state);
+            } else if (state instanceof CancelledGameState) {
+                cancelledState(gameState, (CancelledGameState) state);
+            } else if (state instanceof FinishedGameState) {
+                finishedState(gameState, (FinishedGameState) state);
+            } else {
+                LOGGER.error("Unexpected value: " + state.state);
             }
             JSONArray playersJson = new JSONArray();
             List<Player> doublePlayers = new ArrayList<>(playersWithCards.keySet());
@@ -63,9 +63,9 @@ public class MessageGenerator {
         }
     }
 
-    private void startedState(GameState state, Map<Player, List<Card>> playersWithCards, Player player, JSONObject gameState, StartedGameState startedGameState) {
+    private void startedState(Map<Player, List<Card>> playersWithCards, Player player, JSONObject gameState, StartedGameState state) {
         gameState.put("state", "started");
-        gameState.put("started_by", startedGameState.getStartedBy());
+        gameState.put("started_by", state.getStartedBy());
         gameState.put("game_num", state.getGameNumber());
         gameState.put("circle_num", state.getCircleNumber());
         gameState.put("player_turn", state.getPlayerTurn());
@@ -80,22 +80,22 @@ public class MessageGenerator {
         gameState.put("cards", cards);
     }
 
-    private void pausedState(GameState state, JSONObject gameState, PausedGameState pausedGameState) {
+    private void pausedState(JSONObject gameState, PausedGameState state) {
         gameState.put("state", "paused");
-        gameState.put("paused_by", pausedGameState.getPausedBy());
+        gameState.put("paused_by", state.getPausedBy());
         gameState.put("game_num", state.getGameNumber());
         gameState.put("circle_num", state.getCircleNumber());
     }
 
-    private void cancelledState(GameState state, JSONObject gameState, CancelledGameState cancelledGameState) {
+    private void cancelledState(JSONObject gameState, CancelledGameState state) {
         gameState.put("state", "cancelled");
-        gameState.put("cancelled_by", cancelledGameState.getCancelledBy());
+        gameState.put("cancelled_by", state.getCancelledBy());
         gameState.put("game_num", state.getGameNumber());
         gameState.put("circle_num", state.getCircleNumber());
     }
 
-    private void finishedState(JSONObject gameState, FinishedGameState finishedGameState) {
+    private void finishedState(JSONObject gameState, FinishedGameState state) {
         gameState.put("state", "finished");
-        gameState.put("winner", finishedGameState.getWinner());
+        gameState.put("winner", state.getWinner());
     }
 }
