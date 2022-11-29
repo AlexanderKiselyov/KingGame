@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  * A web client for server functionality testing
  */
 public class WebClient {
-    private static final int CLIENTS_COUNT = 4;
+    private static final int CLIENTS_COUNT = 20;
 
     public static void main(String[] args) {
         try {
@@ -34,7 +34,6 @@ public class WebClient {
                         String messageText = message.getPayload();
                         if (messageText.contains("session_id") && !messageText.contains("game_session_id")) {
                             JSONObject messageJson = new JSONObject(messageText);
-                            System.out.println(messageText);
                             sessionsId.add(messageJson.getString("session_id"));
                         }
                         System.out.println("received message - " + messageText);
@@ -53,7 +52,7 @@ public class WebClient {
                 WebSocketSession session = clientsSessions.get(i);
                 TextMessage message = new TextMessage("{\n" +
                         "    \"session_id\" : " + sessionsId.get(i) + ",\n" +
-                        "    \"player_name\" : \"ABC\",\n" +
+                        "    \"player_name\" : \"client" + (i + 1) + "\",\n" +
                         "    \"action\" : \"play\"\n" +
                         "}");
                 service.execute(() -> {
@@ -66,6 +65,9 @@ public class WebClient {
                 });
             }
             service.awaitTermination(3, TimeUnit.SECONDS);
+            for (WebSocketSession session : clientsSessions) {
+                session.close();
+            }
             service.shutdown();
         } catch (Exception e) {
             System.out.println("Exception while accessing websockets: " + e);

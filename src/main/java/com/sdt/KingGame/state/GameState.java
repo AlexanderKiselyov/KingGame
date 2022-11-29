@@ -12,7 +12,7 @@ import java.util.Random;
 
 public class GameState {
     private final static Integer MAX_CARDS_NUMBER = 8;
-    public String state = "";
+    protected String state = "";
     private final Integer gameNumber;
     private final Integer circleNumber;
     private final Integer playerTurn;
@@ -50,6 +50,10 @@ public class GameState {
 
     public Map<Player, List<Card>> getPlayersWithCards() {
         return playersWithCards;
+    }
+
+    public String getStateValue() {
+        return state;
     }
 
     public void changeState(int playerId, String suit, int magnitude) {

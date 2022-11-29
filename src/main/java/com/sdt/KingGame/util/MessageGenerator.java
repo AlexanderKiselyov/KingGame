@@ -25,6 +25,8 @@ import java.util.Map;
 public class MessageGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageGenerator.class);
 
+    public MessageGenerator() {}
+
     public void generateMessage(GameSession gameSession) throws IOException {
         GameState state = gameSession.getState();
         Map<Player, List<Card>> playersWithCards = state.getPlayersWithCards();
@@ -41,7 +43,7 @@ public class MessageGenerator {
             } else if (state instanceof FinishedGameState) {
                 finishedState(gameState, (FinishedGameState) state);
             } else {
-                LOGGER.error("Unexpected value: " + state.state);
+                LOGGER.error("Unexpected value: " + state.getStateValue());
             }
             JSONArray playersJson = new JSONArray();
             List<Player> doublePlayers = new ArrayList<>(playersWithCards.keySet());

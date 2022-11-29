@@ -7,7 +7,6 @@ import com.sdt.KingGame.util.MessageGenerator;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
@@ -28,7 +27,7 @@ public class MessageListener {
     public MessageListener() {
     }
 
-    public void handle(WebSocketSession session, JSONObject jsonValue, List<GameSession> gameSessions) throws IOException {
+    public void handle(WebSocketSession session, JSONObject jsonValue, List<GameSession> gameSessions) {
         try {
             String action = jsonValue.getString("action");
             switch (action) {
@@ -45,7 +44,7 @@ public class MessageListener {
                 }
             }
         } catch (Exception e) {
-            session.sendMessage(new TextMessage("Cannot handle message."));
+            LOGGER.error("Cannot handle message. Error: " + e);
         }
     }
 
@@ -57,13 +56,13 @@ public class MessageListener {
         }
         String playerName = jsonValue.getString("player_name");
         List<Player> players = new LinkedList<>();
-        Long currentGameNumber = System.currentTimeMillis();
         synchronized (queueSession) {
             queueSession.add(new Player(playerIdCounter.getAndIncrement(), playerName, session));
             if (queueSession.size() >= PLAYERS_CNT) {
                 for (int i = 0; i < PLAYERS_CNT; i++) {
                     players.add(queueSession.poll());
                 }
+                Long currentGameNumber = System.currentTimeMillis();
                 GameSession newGameSession = new GameSession(currentGameNumber, players);
                 gameSessions.add(newGameSession);
                 messageGenerator.generateMessage(newGameSession);
