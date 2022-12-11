@@ -13,9 +13,9 @@ public class Deck {
     }
 
     private void createNewDeck() {
-        List<String> suits = Card.getValidSuits();
+        List<Suits> suits = Card.getValidSuits();
         List<Integer> magnitudes = Card.getValidMagnitude();
-        for (String suit : suits) {
+        for (Suits suit : suits) {
             for (Integer magnitude : magnitudes) {
                 deck.add(new Card(suit, magnitude));
             }

@@ -1,5 +1,6 @@
 package com.sdt.KingGame.game;
 
+import com.sdt.KingGame.model.GameTurnsPK;
 import com.sdt.KingGame.state.GameState;
 import com.sdt.KingGame.state.StartedGameState;
 
@@ -14,7 +15,8 @@ public class GameSession {
 
     public GameSession(Long gameSessionId, List<Player> players) {
         this.gameSessionId = gameSessionId;
-        state = new StartedGameState(players, new Deck());
+        GameTurnsPK turnsPK = new GameTurnsPK(gameSessionId);
+        state = new StartedGameState(players, new Deck(), turnsPK);
     }
 
     public Long getGameSessionId() {

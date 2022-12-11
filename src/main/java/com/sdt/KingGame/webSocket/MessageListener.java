@@ -14,24 +14,21 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MessageListener {
-    private final static Integer PLAYERS_CNT = 4;
     private final AtomicInteger playerIdCounter = new AtomicInteger(1);
-    private final Queue<Player> queueSession = new ConcurrentLinkedQueue<>();
     private final MessageGenerator messageGenerator = new MessageGenerator();
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageListener.class);
 
     public MessageListener() {
     }
 
-    public void handle(WebSocketSession session, JSONObject jsonValue, List<GameSession> gameSessions) {
+    public void handle(WebSocketSession session, JSONObject jsonValue, Queue<Player> queueSession, List<GameSession> gameSessions, Integer playersCount) {
         try {
             String action = jsonValue.getString("action");
             switch (action) {
-                case "play" -> playAction(session, jsonValue, gameSessions);
+                case "play" -> playAction(session, jsonValue, gameSessions, playersCount, queueSession);
                 case "turn" -> turnAction(jsonValue, gameSessions);
                 case "pause" -> {
                     // TODO логика обработки паузы (пауза одного игроков или потеря соединения с одним из игроков)
@@ -48,7 +45,7 @@ public class MessageListener {
         }
     }
 
-    private void playAction(WebSocketSession session, JSONObject jsonValue, List<GameSession> gameSessions) throws IOException {
+    private void playAction(WebSocketSession session, JSONObject jsonValue, List<GameSession> gameSessions, Integer playersCount, Queue<Player> queueSession) throws IOException {
         String getSessionId = jsonValue.getString("session_id");
         if (!session.getId().equals(getSessionId)) {
             LOGGER.error("Session id is not valid.");
@@ -58,8 +55,8 @@ public class MessageListener {
         List<Player> players = new LinkedList<>();
         synchronized (queueSession) {
             queueSession.add(new Player(playerIdCounter.getAndIncrement(), playerName, session));
-            if (queueSession.size() >= PLAYERS_CNT) {
-                for (int i = 0; i < PLAYERS_CNT; i++) {
+            if (queueSession.size() >= playersCount) {
+                for (int i = 0; i < playersCount; i++) {
                     players.add(queueSession.poll());
                 }
                 Long currentGameNumber = System.currentTimeMillis();

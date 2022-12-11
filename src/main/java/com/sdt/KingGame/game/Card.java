@@ -7,16 +7,16 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Card {
-    private String suit;
+    private Suits suit;
     private Integer magnitude;
     private static final Logger LOGGER = LoggerFactory.getLogger(Card.class);
 
-    public Card(String suit, Integer magnitude) {
+    public Card(Suits suit, Integer magnitude) {
         setMagnitude(magnitude);
         setSuit(suit);
     }
 
-    public String getSuit() {
+    public Suits getSuit() {
         return suit;
     }
 
@@ -24,8 +24,8 @@ public class Card {
         return magnitude;
     }
 
-    private void setSuit(String suit) {
-        List<String> validSuits = getValidSuits();
+    private void setSuit(Suits suit) {
+        List<Suits> validSuits = getValidSuits();
         if (validSuits.contains(suit)) {
             this.suit = suit;
         } else {
@@ -46,7 +46,7 @@ public class Card {
         return Arrays.asList(7, 8, 9, 10, 11, 12, 13, 14);
     }
 
-    public static List<String> getValidSuits() {
-        return Arrays.asList("hearts", "clubs", "diamonds", "spades");
+    public static List<Suits> getValidSuits() {
+        return Arrays.asList(Suits.HEARTS, Suits.CLUBS, Suits.DIAMONDS, Suits.SPADES);
     }
 }
