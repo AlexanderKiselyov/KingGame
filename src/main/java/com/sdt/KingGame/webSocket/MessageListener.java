@@ -3,6 +3,7 @@ package com.sdt.KingGame.webSocket;
 import com.sdt.KingGame.game.GameSession;
 import com.sdt.KingGame.game.Player;
 import com.sdt.KingGame.state.GameState;
+import com.sdt.KingGame.state.States;
 import com.sdt.KingGame.util.MessageGenerator;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -30,15 +31,9 @@ public class MessageListener {
             switch (action) {
                 case "play" -> playAction(session, jsonValue, gameSessions, playersCount, queueSession);
                 case "turn" -> turnAction(jsonValue, gameSessions);
-                case "pause" -> {
-                    // TODO логика обработки паузы (пауза одного игроков или потеря соединения с одним из игроков)
-                }
-                case "resume" -> {
-                    // TODO логика обработки закрытия меню паузы у игрока
-                }
-                case "reconnect" -> {
-                    // TODO логика повторного присоединения игрока после потери соединения
-                }
+                case "pause" -> pauseAction(jsonValue, gameSessions);
+                case "resume" -> resumeAction(jsonValue, gameSessions);
+                case "reconnect" -> reconnectAction(session, jsonValue, gameSessions);
             }
         } catch (Exception e) {
             LOGGER.error("Cannot handle message. Error: " + e);
@@ -68,20 +63,11 @@ public class MessageListener {
     }
 
     private void turnAction(JSONObject jsonValue, List<GameSession> gameSessions) throws IOException {
-        Long gameSessionId = jsonValue.getLong("game_session_id");
-        GameSession currentGameSession = null;
-        for (GameSession gameSession : gameSessions) {
-            if (Objects.equals(gameSession.getGameSessionId(), gameSessionId)) {
-                currentGameSession = gameSession;
-                continue;
-            }
-            LOGGER.error("No such game session id found: " + gameSessionId);
-        }
+        GameSession currentGameSession = getGameSession(jsonValue, gameSessions);
+        GameState currentState = currentGameSession.getState();
         JSONObject gameState = jsonValue.getJSONObject("game_state");
         int gameNum = (int) gameState.get("game_num");
         int circleNum = (int) gameState.get("circle_num");
-        assert currentGameSession != null;
-        GameState currentState = currentGameSession.getState();
         if (currentState.getGameNumber() > gameNum ||
                 currentState.getGameNumber() == gameNum && currentState.getCircleNumber() > circleNum ||
                 currentState.getGameNumber() == gameNum && currentState.getCircleNumber() + 1 < circleNum ||
@@ -93,7 +79,46 @@ public class MessageListener {
         JSONObject turn = jsonValue.getJSONObject("turn");
         String suit = (String) turn.get("suit");
         int magnitude = (int) turn.get("magnitude");
-        currentGameSession.getState().changeState(playerId, suit, magnitude);
+        currentState.changeState(playerId, suit, magnitude);
+        if (currentState.getStateValue() == States.FINISHED) {
+            currentGameSession.setFinishedState();
+            gameSessions.remove(currentGameSession);
+        }
         messageGenerator.generateMessage(currentGameSession);
+    }
+
+    private void pauseAction(JSONObject jsonValue, List<GameSession> gameSessions) throws IOException {
+        GameSession currentGameSession = getGameSession(jsonValue, gameSessions);
+        Integer pausedBy = jsonValue.getInt("player_id");
+        currentGameSession.setPausedState(pausedBy);
+        messageGenerator.generateMessage(currentGameSession);
+    }
+
+    private void resumeAction(JSONObject jsonValue, List<GameSession> gameSessions) throws IOException {
+        GameSession currentGameSession = getGameSession(jsonValue, gameSessions);
+        Integer startedBy = jsonValue.getInt("player_id");
+        currentGameSession.setStartedState(startedBy);
+        messageGenerator.generateMessage(currentGameSession);
+    }
+
+    private void reconnectAction(WebSocketSession session, JSONObject jsonValue, List<GameSession> gameSessions) throws IOException {
+        GameSession currentGameSession = getGameSession(jsonValue, gameSessions);
+        Integer reconnectBy = jsonValue.getInt("player_id");
+        currentGameSession.setStartedStateWithReconnect(reconnectBy, session);
+        messageGenerator.generateMessage(currentGameSession);
+    }
+
+    private GameSession getGameSession(JSONObject jsonValue, List<GameSession> gameSessions) {
+        Long gameSessionId = jsonValue.getLong("game_session_id");
+        GameSession currentGameSession = null;
+        for (GameSession gameSession : gameSessions) {
+            if (Objects.equals(gameSession.getGameSessionId(), gameSessionId)) {
+                currentGameSession = gameSession;
+                continue;
+            }
+            LOGGER.error("No such game session id found: " + gameSessionId);
+        }
+        assert currentGameSession != null;
+        return currentGameSession;
     }
 }

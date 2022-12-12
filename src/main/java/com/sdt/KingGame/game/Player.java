@@ -6,7 +6,7 @@ public class Player {
     private final Integer id;
     private final String name;
     private Integer points;
-    private final WebSocketSession session;
+    private WebSocketSession session;
 
     public Player(Integer id, String name, WebSocketSession session) {
         this.id = id;
@@ -33,5 +33,9 @@ public class Player {
 
     public void setPoints(int points) {
         this.points = points;
+    }
+
+    public void setWebSocketSession(WebSocketSession newWebSocketSession) {
+        this.session = newWebSocketSession;
     }
 }

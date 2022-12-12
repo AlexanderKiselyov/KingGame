@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  * A web client for server functionality testing
  */
 public class WebClient {
-    private static final int CLIENTS_COUNT = 20;
+    private static final int CLIENTS_COUNT = 4;
 
     public static void main(String[] args) {
         try {

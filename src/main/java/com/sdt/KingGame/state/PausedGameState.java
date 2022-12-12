@@ -6,13 +6,23 @@ import com.sdt.KingGame.model.GameTurnsPK;
 
 import java.util.List;
 
+/**
+ * Состояние игры на паузе
+ */
 public class PausedGameState extends GameState {
-    private final Integer pausedBy;
+    /**
+     * ID игрока, поставившего игру на паузу или отключившегося от игры
+     */
+    private Integer pausedBy;
 
     public PausedGameState(List<Player> players, Deck deck, GameTurnsPK gameTurnsPK) {
         super(players, deck, gameTurnsPK);
         state = States.PAUSED;
         pausedBy = players.get(0).getId();
+    }
+
+    public void setPausedBy(Integer pausedBy) {
+        this.pausedBy = pausedBy;
     }
 
     public Integer getPausedBy() {

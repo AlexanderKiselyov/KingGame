@@ -19,9 +19,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 
+/**
+ * Общее состояние игры
+ */
 public class GameState {
     private final static Integer MAX_CARDS_NUMBER = 8;
     private final static Integer GAMES_COUNT = 12;
+    /**
+     * Текущее состояние игры
+     */
     protected States state = States.STARTED;
     /**
      * Номер игры
@@ -44,7 +50,7 @@ public class GameState {
      */
     private String suitCard;
     private final Map<Player, List<Card>> playersWithCards;
-    private final List<Player> doublePlayers;
+    private List<Player> doublePlayers;
     private TurnRepository turns;
     private final GameTurnsPK turnsPK;
     private static final Logger LOGGER = LoggerFactory.getLogger(GameState.class);
@@ -63,8 +69,7 @@ public class GameState {
         }
         playerTurn = randomTurn(players);
         this.turnsPK = turnsPK;
-        doublePlayers = new ArrayList<>(playersWithCards.keySet());
-        doublePlayers.addAll(playersWithCards.keySet());
+        setDoublePlayers();
     }
 
     private Integer randomTurn(List<Player> players) {
@@ -242,5 +247,10 @@ public class GameState {
             }
             default -> LOGGER.error("Wrong game number.");
         }
+    }
+
+    public void setDoublePlayers() {
+        doublePlayers = new ArrayList<>(playersWithCards.keySet());
+        doublePlayers.addAll(playersWithCards.keySet());
     }
 }

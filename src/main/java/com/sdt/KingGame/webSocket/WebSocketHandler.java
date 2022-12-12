@@ -52,7 +52,7 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
                     break;
                 }
             }
-            disconnectListener.handle(session);
+            disconnectListener.handle(session, gameSessions);
         }
     }
 
