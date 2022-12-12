@@ -23,14 +23,15 @@ public class DisconnectListener {
                 Set<Player> players = gameSession.getState().getPlayersWithCards().keySet();
                 for (Player player : players) {
                     if (player.getSession() == session) {
-                        gameSession.setPausedState(player.getId());
-                        messageGenerator.generateMessage(gameSession);
+                        gameSession.setCancelledOrPausedState(player.getId());
+                        if (session != null) {
+                            messageGenerator.generateMessage(gameSession);
+                        }
                     }
                 }
             }
         } catch (Exception e) {
             LOGGER.error("Cannot handle message. Error: " + e);
         }
-
     }
 }

@@ -13,6 +13,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -61,12 +62,24 @@ public class MessageGenerator {
             }
             gameState.put("players", playersJson);
             message.put("game_state", gameState);
-            player.getSession().sendMessage(new TextMessage(message.toString(4)));
+            if (player.getSession().isOpen()) {
+                player.getSession().sendMessage(new TextMessage(message.toString(4)));
+            }
+        }
+    }
+
+    public void generateCancelledMessage(WebSocketSession session) throws IOException {
+        JSONObject message = new JSONObject();
+        JSONObject gameState = new JSONObject();
+        gameState.put("state", States.CANCELLED.getName());
+        message.put("game_state", gameState);
+        if (session.isOpen()) {
+            session.sendMessage(new TextMessage(message.toString(4)));
         }
     }
 
     private void startedState(Map<Player, List<Card>> playersWithCards, Player player, JSONObject gameState, StartedGameState state) {
-        gameState.put("state", "started");
+        gameState.put("state", States.STARTED.getName());
         gameState.put("started_by", state.getStartedBy());
         gameState.put("game_num", state.getGameNumber());
         gameState.put("circle_num", state.getCircleNumber());
@@ -75,7 +88,7 @@ public class MessageGenerator {
         List<Card> playerCards = playersWithCards.get(player);
         for (Card card : playerCards) {
             JSONObject currentCard = new JSONObject();
-            currentCard.put("suit", card.getSuit());
+            currentCard.put("suit", card.getSuit().getName());
             currentCard.put("magnitude", card.getMagnitude());
             cards.put(currentCard);
         }
@@ -83,21 +96,21 @@ public class MessageGenerator {
     }
 
     private void pausedState(JSONObject gameState, PausedGameState state) {
-        gameState.put("state", "paused");
+        gameState.put("state", States.PAUSED.getName());
         gameState.put("paused_by", state.getPausedBy());
         gameState.put("game_num", state.getGameNumber());
         gameState.put("circle_num", state.getCircleNumber());
     }
 
     private void cancelledState(JSONObject gameState, CancelledGameState state) {
-        gameState.put("state", "cancelled");
+        gameState.put("state", States.CANCELLED.getName());
         gameState.put("cancelled_by", state.getCancelledBy());
         gameState.put("game_num", state.getGameNumber());
         gameState.put("circle_num", state.getCircleNumber());
     }
 
     private void finishedState(JSONObject gameState, FinishedGameState state) {
-        gameState.put("state", "finished");
+        gameState.put("state", States.FINISHED.getName());
         gameState.put("winner", state.getWinner());
     }
 }

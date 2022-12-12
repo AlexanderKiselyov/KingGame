@@ -1,5 +1,7 @@
 package com.sdt.KingGame.game;
 
+import com.sdt.KingGame.util.Suits;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

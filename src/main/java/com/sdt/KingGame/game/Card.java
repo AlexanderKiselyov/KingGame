@@ -1,5 +1,6 @@
 package com.sdt.KingGame.game;
 
+import com.sdt.KingGame.util.Suits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

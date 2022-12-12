@@ -1,6 +1,7 @@
 package com.sdt.KingGame.game;
 
 import com.sdt.KingGame.model.GameTurnsPK;
+import com.sdt.KingGame.state.CancelledGameState;
 import com.sdt.KingGame.state.FinishedGameState;
 import com.sdt.KingGame.state.GameState;
 import com.sdt.KingGame.state.PausedGameState;
@@ -55,10 +56,18 @@ public class GameSession {
         ((FinishedGameState) state).setWinner(winner);
     }
 
-    public void setPausedState(Integer pausedBy) {
-        state = new PausedGameState(players, deck, turnsPK);
-        ((PausedGameState) state).setPausedBy(pausedBy);
+    public void setCancelledOrPausedState(Integer pausedBy) {
+        if (state instanceof PausedGameState) {
+            setCancelledState(pausedBy);
+        } else {
+            state = new PausedGameState(players, deck, turnsPK);
+            ((PausedGameState) state).setPausedBy(pausedBy);
+        }
+    }
 
+    public void setCancelledState(Integer cancelledBy) {
+        state = new CancelledGameState(players, deck, turnsPK);
+        ((CancelledGameState) state).setCancelledBy(cancelledBy);
     }
 
     public void setStartedState(Integer startedBy) {
