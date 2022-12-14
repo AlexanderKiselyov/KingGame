@@ -49,7 +49,11 @@ public class GameState {
     /**
      * Карта масти
      */
-    private String suitCard;
+    private Suits suitCard;
+    /**
+     * Список карт во взятке на текущем круге
+     */
+    private final List<Card> bribe;
     private final Map<Player, List<Card>> playersWithCards;
     private List<Player> doublePlayers;
     private TurnRepository turns;
@@ -70,6 +74,7 @@ public class GameState {
         }
         playerTurn = randomTurn(players);
         this.turnsPK = turnsPK;
+        bribe = new ArrayList<>();
         setDoublePlayers();
     }
 
@@ -101,10 +106,15 @@ public class GameState {
         return state;
     }
 
+    public List<Card> getBribeCards() {
+        return bribe;
+    }
+
     public void changeState(int playerId, String suit, int magnitude) {
         turns.save(new GameTurns(turnsPK.getGameSessionId(), gameNumber, circleNumber, playerId, suit, magnitude));
 
         if (Objects.equals(playerNumTurn, WebSocketHandler.getPlayersCount())) {
+            bribe.add(new Card(Suits.valueOf(suit), magnitude));
             changePlayerPoints();
             if (gameNumber > GAMES_COUNT) {
                 state = States.FINISHED;
@@ -113,13 +123,14 @@ public class GameState {
             if (Objects.equals(circleNumber, MAX_CARDS_NUMBER)) {
                 gameNumber++;
                 circleNumber = 1;
+                bribe.clear();
             } else {
                 circleNumber++;
             }
             playerNumTurn = 1;
         } else {
             if (playerNumTurn++ == 0) {
-                suitCard = suit;
+                suitCard = Suits.valueOf(suit);
             }
         }
         changeCurrentPlayerAndCards(playerId, suit, magnitude);
@@ -158,7 +169,6 @@ public class GameState {
             }
             i++;
         }
-        List<Card> bribeCards = new ArrayList<>();
         int bribeIndex = 0;
         int maxMagnitude = 0;
         i = 0;
@@ -167,41 +177,40 @@ public class GameState {
                 maxMagnitude = turnInfo.getMagnitude();
                 bribeIndex = i;
             }
-            bribeCards.add(new Card(Suits.valueOf(turnInfo.getSuit()), turnInfo.getMagnitude()));
             i++;
         }
         Player bribeTaker = getPlayerById(playerTurns.get(bribeIndex).getPlayerId());
         assert bribeTaker != null;
-        recalculatePlayerPoints(bribeTaker, bribeCards);
+        recalculatePlayerPoints(bribeTaker);
     }
 
-    private void recalculatePlayerPoints(Player bribeTaker, List<Card> bribeCards) {
+    private void recalculatePlayerPoints(Player bribeTaker) {
         int currentBribeTakerPoints = bribeTaker.getPoints();
         switch (gameNumber) {
             case 1 -> bribeTaker.setPoints(currentBribeTakerPoints - 2);
             case 2 -> {
-                for (Card bribeCard : bribeCards) {
+                for (Card bribeCard : bribe) {
                     if (bribeCard.getMagnitude() == 13) {
                         bribeTaker.setPoints(currentBribeTakerPoints - 4);
                     }
                 }
             }
             case 3 -> {
-                for (Card bribeCard : bribeCards) {
+                for (Card bribeCard : bribe) {
                     if (bribeCard.getMagnitude() == 12) {
                         bribeTaker.setPoints(currentBribeTakerPoints - 4);
                     }
                 }
             }
             case 4 -> {
-                for (Card bribeCard : bribeCards) {
+                for (Card bribeCard : bribe) {
                     if (bribeCard.getSuit() == Suits.HEARTS) {
                         bribeTaker.setPoints(currentBribeTakerPoints - 2);
                     }
                 }
             }
             case 5 -> {
-                for (Card bribeCard : bribeCards) {
+                for (Card bribeCard : bribe) {
                     if (bribeCard.getSuit() == Suits.HEARTS && bribeCard.getMagnitude() == 13) {
                         bribeTaker.setPoints(currentBribeTakerPoints - 16);
                     }
@@ -214,28 +223,28 @@ public class GameState {
             }
             case 7 -> bribeTaker.setPoints(currentBribeTakerPoints + 2);
             case 8 -> {
-                for (Card bribeCard : bribeCards) {
+                for (Card bribeCard : bribe) {
                     if (bribeCard.getMagnitude() == 13) {
                         bribeTaker.setPoints(currentBribeTakerPoints + 4);
                     }
                 }
             }
             case 9 -> {
-                for (Card bribeCard : bribeCards) {
+                for (Card bribeCard : bribe) {
                     if (bribeCard.getMagnitude() == 12) {
                         bribeTaker.setPoints(currentBribeTakerPoints + 4);
                     }
                 }
             }
             case 10 -> {
-                for (Card bribeCard : bribeCards) {
+                for (Card bribeCard : bribe) {
                     if (bribeCard.getSuit() == Suits.HEARTS) {
                         bribeTaker.setPoints(currentBribeTakerPoints + 2);
                     }
                 }
             }
             case 11 -> {
-                for (Card bribeCard : bribeCards) {
+                for (Card bribeCard : bribe) {
                     if (bribeCard.getSuit() == Suits.HEARTS && bribeCard.getMagnitude() == 13) {
                         bribeTaker.setPoints(currentBribeTakerPoints + 16);
                     }

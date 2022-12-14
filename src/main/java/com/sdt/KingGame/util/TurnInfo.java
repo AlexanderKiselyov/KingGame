@@ -15,8 +15,8 @@ public class TurnInfo {
         return playerId;
     }
 
-    public String getSuit() {
-        return suit;
+    public Suits getSuit() {
+        return Suits.valueOf(suit);
     }
 
     public Integer getMagnitude() {

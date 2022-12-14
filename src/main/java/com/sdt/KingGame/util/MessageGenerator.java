@@ -93,6 +93,14 @@ public class MessageGenerator {
             cards.put(currentCard);
         }
         gameState.put("cards", cards);
+        JSONArray bribe = new JSONArray();
+        for (Card bribeCard : state.getBribeCards()) {
+            JSONObject currentCard = new JSONObject();
+            currentCard.put("suit", bribeCard.getSuit().getName());
+            currentCard.put("magnitude", bribeCard.getMagnitude());
+            bribe.put(currentCard);
+        }
+        gameState.put("bribe", bribe);
     }
 
     private void pausedState(JSONObject gameState, PausedGameState state) {
