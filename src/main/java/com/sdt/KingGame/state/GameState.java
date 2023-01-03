@@ -5,16 +5,18 @@ import com.sdt.KingGame.game.Deck;
 import com.sdt.KingGame.game.Player;
 import com.sdt.KingGame.util.States;
 import com.sdt.KingGame.util.Suits;
-import com.sdt.KingGame.model.GameTurns;
 import com.sdt.KingGame.model.GameTurnsPK;
-import com.sdt.KingGame.repository.TurnRepository;
 import com.sdt.KingGame.util.TurnInfo;
 import com.sdt.KingGame.webSocket.WebSocketHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -33,19 +35,19 @@ public class GameState {
     /**
      * Номер игры
      */
-    private Integer gameNumber;
+    Integer gameNumber;
     /**
      * Номер круга в рамках одной игры
      */
-    private Integer circleNumber;
+    Integer circleNumber;
     /**
      * Номер id ходящего игрока
      */
-    private Integer playerTurn;
+    Integer playerTurn;
     /**
      * Порядковый номер ходящего игрока в рамках одного круга
      */
-    private Integer playerNumTurn;
+    Integer playerNumTurn;
     /**
      * Карта масти
      */
@@ -54,9 +56,13 @@ public class GameState {
      * Список карт во взятке на текущем круге
      */
     private final List<Card> bribe;
-    private final Map<Player, List<Card>> playersWithCards;
-    private List<Player> doublePlayers;
-    private TurnRepository turns;
+    Map<Player, List<Card>> playersWithCards;
+    List<Player> doublePlayers;
+
+    public GameTurnsPK getTurnsPK() {
+        return turnsPK;
+    }
+
     private final GameTurnsPK turnsPK;
     private static final Logger LOGGER = LoggerFactory.getLogger(GameState.class);
 
@@ -64,18 +70,17 @@ public class GameState {
         gameNumber = 1;
         circleNumber = 1;
         playerNumTurn = 1;
-        playersWithCards = new HashMap<>();
-        for (Player player : players) {
-            List<Card> currentPlayerCards = new ArrayList<>();
-            for (int i = 0; i < MAX_CARDS_NUMBER; i++) {
-                currentPlayerCards.add(deck.dealTopCard());
-            }
-            playersWithCards.put(player, currentPlayerCards);
-        }
+        playersWithCards = new LinkedHashMap<>();
+        handOutCards(players, deck);
         playerTurn = randomTurn(players);
         this.turnsPK = turnsPK;
         bribe = new ArrayList<>();
-        setDoublePlayers();
+    }
+
+    public GameState(GameTurnsPK turnsPK) {
+        bribe = new ArrayList<>();
+        this.turnsPK = turnsPK;
+        playersWithCards = new LinkedHashMap<>();
     }
 
     private Integer randomTurn(List<Player> players) {
@@ -110,12 +115,13 @@ public class GameState {
         return bribe;
     }
 
-    public void changeState(int playerId, String suit, int magnitude) {
-        turns.save(new GameTurns(turnsPK.getGameSessionId(), gameNumber, circleNumber, playerId, suit, magnitude));
+    public void changeState(int playerId, String suit, int magnitude, Connection connection) throws SQLException {
+        Statement statement = connection.createStatement();
+        statement.executeUpdate("INSERT INTO turns(game_session_id, game_number, circle_number, player_id, suit, magnitude) VALUES (" + turnsPK.getGameSessionId() + ", " + gameNumber + ", " + circleNumber + ", " + playerId + ", '" + suit + "', " + magnitude + ")");
 
         if (Objects.equals(playerNumTurn, WebSocketHandler.getPlayersCount())) {
-            bribe.add(new Card(Suits.valueOf(suit), magnitude));
-            changePlayerPoints();
+            bribe.add(new Card(Suits.getSuit(suit), magnitude));
+            changePlayerPoints(connection);
             if (gameNumber > GAMES_COUNT) {
                 state = States.FINISHED;
                 return;
@@ -123,14 +129,15 @@ public class GameState {
             if (Objects.equals(circleNumber, MAX_CARDS_NUMBER)) {
                 gameNumber++;
                 circleNumber = 1;
+                handOutCards(playersWithCards.keySet().stream().toList(), new Deck());
                 bribe.clear();
             } else {
                 circleNumber++;
             }
             playerNumTurn = 1;
         } else {
-            if (playerNumTurn++ == 0) {
-                suitCard = Suits.valueOf(suit);
+            if (playerNumTurn++ == 1) {
+                suitCard = Suits.getSuit(suit);
             }
         }
         changeCurrentPlayerAndCards(playerId, suit, magnitude);
@@ -148,24 +155,25 @@ public class GameState {
     private void changeCurrentPlayerAndCards(int playerId, String suit, int magnitude) {
         Player currentPlayer = getPlayerById(playerId);
         List<Card> currentCards = playersWithCards.get(currentPlayer);
-        currentCards.remove(new Card(Suits.valueOf(suit), magnitude));
+        currentCards.remove(new Card(Suits.getSuit(suit), magnitude));
         playersWithCards.put(currentPlayer, currentCards);
         playerTurn = nextTurn(currentPlayer);
     }
 
-    private void changePlayerPoints() {
+    private void changePlayerPoints(Connection connection) throws SQLException {
         turnsPK.setGameNumber(gameNumber);
         turnsPK.setCircleNumber(circleNumber);
         List<GameTurnsPK> keys = new ArrayList<>();
         List<TurnInfo> playerTurns = new ArrayList<>();
         int i = 0;
+        Statement statement = connection.createStatement();
         for (Player player : playersWithCards.keySet()) {
             keys.add(turnsPK);
-            keys.get(i).setPlayerId(player.getId());
-            if (turns.findById(keys.get(i)).isPresent()) {
-                playerTurns.add(turns.findById(keys.get(i)).get().getTurnInfo());
-            } else {
-                LOGGER.error("Cannot get database table entry.");
+            GameTurnsPK gameTurnPK = keys.get(i);
+            gameTurnPK.setPlayerId(player.getId());
+            ResultSet result = statement.executeQuery("SELECT * FROM turns WHERE game_session_id = " + gameTurnPK.getGameSessionId() + " AND game_number = " + gameTurnPK.getGameNumber() + " AND circle_number = " + gameTurnPK.getCircleNumber() + " AND player_id = " + gameTurnPK.getPlayerId());
+            while (result.next()) {
+                playerTurns.add(new TurnInfo(result.getInt("player_id"), result.getString("suit"), result.getInt("magnitude")));
             }
             i++;
         }
@@ -257,6 +265,18 @@ public class GameState {
             }
             default -> LOGGER.error("Wrong game number.");
         }
+    }
+
+    void handOutCards(List<Player> players, Deck deck) {
+        playersWithCards.clear();
+        for (Player player : players) {
+            List<Card> currentPlayerCards = new ArrayList<>();
+            for (int i = 0; i < MAX_CARDS_NUMBER; i++) {
+                currentPlayerCards.add(deck.dealTopCard());
+            }
+            playersWithCards.put(player, currentPlayerCards);
+        }
+        setDoublePlayers();
     }
 
     public void setDoublePlayers() {

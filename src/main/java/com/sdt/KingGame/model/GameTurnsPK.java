@@ -23,6 +23,18 @@ public class GameTurnsPK implements Serializable {
         return gameSessionId;
     }
 
+    public Integer getGameNumber() {
+        return gameNumber;
+    }
+
+    public Integer getCircleNumber() {
+        return circleNumber;
+    }
+
+    public Integer getPlayerId() {
+        return playerId;
+    }
+
     public void setGameNumber(Integer gameNumber) {
         this.gameNumber = gameNumber;
     }

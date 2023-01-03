@@ -1,5 +1,6 @@
 package com.sdt.KingGame.web;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketHttpHeaders;
@@ -19,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  * A web client for server functionality testing
  */
 public class WebClient {
-    private static final int CLIENTS_COUNT = 20;
+    private static final int CLIENTS_COUNT = 4;
 
     public static void main(String[] args) {
         try {
@@ -30,7 +31,7 @@ public class WebClient {
 
                 WebSocketSession webSocketSession = webSocketClient.doHandshake(new TextWebSocketHandler() {
                     @Override
-                    public void handleTextMessage(WebSocketSession session, TextMessage message) {
+                    public void handleTextMessage(WebSocketSession session, TextMessage message) throws JSONException {
                         String messageText = message.getPayload();
                         if (messageText.contains("session_id") && !messageText.contains("game_session_id")) {
                             JSONObject messageJson = new JSONObject(messageText);

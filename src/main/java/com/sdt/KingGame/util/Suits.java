@@ -15,4 +15,13 @@ public enum Suits {
     public String getName() {
         return name;
     }
+
+    public static Suits getSuit(String suit) {
+        for (Suits suits : Suits.values()) {
+            if (suits.getName().equals(suit)) {
+                return suits;
+            }
+        }
+        return null;
+    }
 }

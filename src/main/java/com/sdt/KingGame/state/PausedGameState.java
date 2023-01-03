@@ -22,6 +22,18 @@ public class PausedGameState extends GameState {
         pausedBy = players.get(0).getId();
     }
 
+    public PausedGameState(GameState state) {
+        super(state.getTurnsPK());
+        this.gameNumber = state.gameNumber;
+        this.circleNumber = state.circleNumber;
+        this.playerNumTurn = state.playerNumTurn;
+        this.playersWithCards = state.playersWithCards;
+        this.doublePlayers = state.doublePlayers;
+        this.playerTurn = state.playerTurn;
+        this.state = States.PAUSED;
+        pausedBy = state.getPlayersWithCards().keySet().iterator().next().getId();
+    }
+
     public void setPausedBy(Integer pausedBy) {
         this.pausedBy = pausedBy;
     }

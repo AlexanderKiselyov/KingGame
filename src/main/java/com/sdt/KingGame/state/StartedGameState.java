@@ -22,6 +22,18 @@ public class StartedGameState extends GameState {
         startedBy = players.get(0).getId();
     }
 
+    public StartedGameState(GameState state) {
+        super(state.getTurnsPK());
+        this.gameNumber = state.gameNumber;
+        this.circleNumber = state.circleNumber;
+        this.playerNumTurn = state.playerNumTurn;
+        this.playersWithCards = state.playersWithCards;
+        this.doublePlayers = state.doublePlayers;
+        this.playerTurn = state.playerTurn;
+        this.state = States.STARTED;
+        startedBy = state.getPlayersWithCards().keySet().iterator().next().getId();
+    }
+
     public void setStartedBy(Integer startedBy) {
         this.startedBy = startedBy;
     }

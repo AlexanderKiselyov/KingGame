@@ -16,7 +16,12 @@ public class TurnInfo {
     }
 
     public Suits getSuit() {
-        return Suits.valueOf(suit);
+        for (Suits suits : Suits.values()) {
+            if (suits.getName().equals(suit)) {
+                return suits;
+            }
+        }
+        return null;
     }
 
     public Integer getMagnitude() {

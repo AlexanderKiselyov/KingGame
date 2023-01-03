@@ -44,7 +44,7 @@ public class GameSession {
     }
 
     public void setFinishedState() {
-        state = new FinishedGameState(players, deck, turnsPK);
+        state = new FinishedGameState(state);
         int winner = 0;
         int maxPoints = 10 - Integer.MAX_VALUE;
         for (Player player : state.getPlayersWithCards().keySet()) {
@@ -60,18 +60,18 @@ public class GameSession {
         if (state instanceof PausedGameState) {
             setCancelledState(pausedBy);
         } else {
-            state = new PausedGameState(players, deck, turnsPK);
+            state = new PausedGameState(state);
             ((PausedGameState) state).setPausedBy(pausedBy);
         }
     }
 
     public void setCancelledState(Integer cancelledBy) {
-        state = new CancelledGameState(players, deck, turnsPK);
+        state = new CancelledGameState(state);
         ((CancelledGameState) state).setCancelledBy(cancelledBy);
     }
 
     public void setStartedState(Integer startedBy) {
-        state = new StartedGameState(players, deck, turnsPK);
+        state = new StartedGameState(state);
         ((StartedGameState) state).setStartedBy(startedBy);
     }
 

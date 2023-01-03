@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -28,12 +30,12 @@ public class MessageListener {
     }
 
     public void handle(WebSocketSession session, JSONObject jsonValue, Queue<Player> queueSession, List<GameSession> gameSessions,
-                       Integer playersCount, Map<GameSession, PauseMaker> pausedGames) {
+                       Integer playersCount, Map<GameSession, PauseMaker> pausedGames, Connection connection) {
         try {
             String action = jsonValue.getString("action");
             switch (action) {
                 case "play" -> playAction(session, jsonValue, gameSessions, playersCount, queueSession);
-                case "turn" -> turnAction(session, jsonValue, gameSessions);
+                case "turn" -> turnAction(session, jsonValue, gameSessions, connection);
                 case "pause" -> pauseAction(session, jsonValue, gameSessions, pausedGames);
                 case "resume" -> resumeAction(session, jsonValue, gameSessions, pausedGames);
                 case "reconnect" -> reconnectAction(session, jsonValue, gameSessions, pausedGames);
@@ -66,7 +68,7 @@ public class MessageListener {
         }
     }
 
-    private void turnAction(WebSocketSession session, JSONObject jsonValue, List<GameSession> gameSessions) throws IOException {
+    private void turnAction(WebSocketSession session, JSONObject jsonValue, List<GameSession> gameSessions, Connection connection) throws IOException, SQLException, ClassNotFoundException {
         GameSession currentGameSession = getGameSession(jsonValue, gameSessions);
         if (currentGameSession != null) {
             GameState currentState = currentGameSession.getState();
@@ -84,7 +86,7 @@ public class MessageListener {
             JSONObject turn = jsonValue.getJSONObject("turn");
             String suit = (String) turn.get("suit");
             int magnitude = (int) turn.get("magnitude");
-            currentState.changeState(playerId, suit, magnitude);
+            currentState.changeState(playerId, suit, magnitude, connection);
             if (currentState.getStateValue() == States.FINISHED) {
                 currentGameSession.setFinishedState();
             }

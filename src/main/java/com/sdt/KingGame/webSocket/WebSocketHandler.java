@@ -12,6 +12,9 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -33,8 +36,9 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
     private MessageListener messageListener = new MessageListener();
     private final Queue<Player> queueSession = new ConcurrentLinkedQueue<>();
     private final Map<GameSession, PauseMaker> pausedGames = new ConcurrentHashMap<>();
+    private Connection connection;
 
-    public WebSocketHandler() {
+    public WebSocketHandler() throws ClassNotFoundException {
         Runnable task = () -> {
             for (Map.Entry<GameSession, PauseMaker> pausedGame : pausedGames.entrySet()) {
                 if (System.currentTimeMillis() - PAUSE_WAITING_MILLIS > pausedGame.getValue().getPauseTime()) {
@@ -44,11 +48,15 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
         };
         ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(1);
         scheduledExecutorService.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS);
+        Class.forName("org.postgresql.Driver");
     }
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws IOException {
+    public void afterConnectionEstablished(WebSocketSession session) throws IOException, SQLException {
         synchronized (sessions) {
+            if (sessions.size == 0) {
+                connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/KingGame","root", "root");
+            }
             sessions.add(session);
             connectListener.handle(session);
         }
@@ -56,11 +64,11 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
-        messageListener.handle(session, new JSONObject(message.getPayload()), queueSession, gameSessions, PLAYERS_CNT, pausedGames);
+        messageListener.handle(session, new JSONObject(message.getPayload()), queueSession, gameSessions, PLAYERS_CNT, pausedGames, connection);
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws SQLException {
         synchronized (sessions) {
             sessions.removeValue(session, true);
             for (Player player : queueSession) {
@@ -70,6 +78,9 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
                 }
             }
             disconnectListener.handle(session, gameSessions);
+            if (sessions.size == 0) {
+                connection.close();
+            }
         }
     }
 
