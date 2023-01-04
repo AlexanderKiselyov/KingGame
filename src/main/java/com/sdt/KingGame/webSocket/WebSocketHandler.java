@@ -43,6 +43,7 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
             for (Map.Entry<GameSession, PauseMaker> pausedGame : pausedGames.entrySet()) {
                 if (System.currentTimeMillis() - PAUSE_WAITING_MILLIS > pausedGame.getValue().getPauseTime()) {
                     pausedGame.getKey().setCancelledState(pausedGame.getValue().getPausedBy());
+                    pausedGames.remove(pausedGame.getKey());
                 }
             }
         };

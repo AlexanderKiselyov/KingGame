@@ -58,11 +58,6 @@ public class GameState {
     private final List<Card> bribe;
     Map<Player, List<Card>> playersWithCards;
     List<Player> doublePlayers;
-
-    public GameTurnsPK getTurnsPK() {
-        return turnsPK;
-    }
-
     private final GameTurnsPK turnsPK;
     private static final Logger LOGGER = LoggerFactory.getLogger(GameState.class);
 
@@ -277,6 +272,10 @@ public class GameState {
             playersWithCards.put(player, currentPlayerCards);
         }
         setDoublePlayers();
+    }
+
+    public GameTurnsPK getTurnsPK() {
+        return turnsPK;
     }
 
     public void setDoublePlayers() {
