@@ -31,9 +31,9 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
     private final static Long PAUSE_WAITING_MILLIS = 180000L;
     private final Array<WebSocketSession> sessions = new Array<>();
     private final List<GameSession> gameSessions = new LinkedList<>();
-    private ConnectListener connectListener = new ConnectListener();
-    private DisconnectListener disconnectListener = new DisconnectListener();
-    private MessageListener messageListener = new MessageListener();
+    private final ConnectListener connectListener = new ConnectListener();
+    private final DisconnectListener disconnectListener = new DisconnectListener();
+    private final MessageListener messageListener = new MessageListener();
     private final Queue<Player> queueSession = new ConcurrentLinkedQueue<>();
     private final Map<GameSession, PauseMaker> pausedGames = new ConcurrentHashMap<>();
     private Connection connection;
@@ -83,26 +83,6 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
                 connection.close();
             }
         }
-    }
-
-    public Array<WebSocketSession> getSessions() {
-        return sessions;
-    }
-
-    public List<GameSession> getGameSessions() {
-        return gameSessions;
-    }
-
-    public void setConnectListener(ConnectListener connectListener) {
-        this.connectListener = connectListener;
-    }
-
-    public void setDisconnectListener(DisconnectListener disconnectListener) {
-        this.disconnectListener = disconnectListener;
-    }
-
-    public void setMessageListener(MessageListener messageListener) {
-        this.messageListener = messageListener;
     }
 
     public static Integer getPlayersCount() {

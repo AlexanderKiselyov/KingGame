@@ -22,16 +22,12 @@ public class GameSession {
      * Текущее состояние игры
      */
     private GameState state;
-    private final List<Player> players;
-    private final Deck deck;
-    private final GameTurnsPK turnsPK;
 
 
     public GameSession(Long gameSessionId, List<Player> players) {
         this.gameSessionId = gameSessionId;
-        this.players = players;
-        this.deck = new Deck();
-        this.turnsPK = new GameTurnsPK(gameSessionId);
+        Deck deck = new Deck();
+        GameTurnsPK turnsPK = new GameTurnsPK(gameSessionId);
         state = new StartedGameState(players, deck, turnsPK);
     }
 

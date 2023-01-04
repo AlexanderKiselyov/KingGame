@@ -68,7 +68,7 @@ public class MessageListener {
         }
     }
 
-    private void turnAction(WebSocketSession session, JSONObject jsonValue, List<GameSession> gameSessions, Connection connection) throws IOException, SQLException, ClassNotFoundException {
+    private void turnAction(WebSocketSession session, JSONObject jsonValue, List<GameSession> gameSessions, Connection connection) throws IOException, SQLException {
         GameSession currentGameSession = getGameSession(jsonValue, gameSessions);
         if (currentGameSession != null) {
             GameState currentState = currentGameSession.getState();
