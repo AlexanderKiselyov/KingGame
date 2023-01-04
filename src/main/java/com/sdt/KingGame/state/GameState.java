@@ -114,8 +114,8 @@ public class GameState {
         Statement statement = connection.createStatement();
         statement.executeUpdate("INSERT INTO turns(game_session_id, game_number, circle_number, player_id, suit, magnitude) VALUES (" + turnsPK.getGameSessionId() + ", " + gameNumber + ", " + circleNumber + ", " + playerId + ", '" + suit + "', " + magnitude + ")");
 
+        bribe.add(new Card(Suits.getSuit(suit), magnitude));
         if (Objects.equals(playerNumTurn, WebSocketHandler.getPlayersCount())) {
-            bribe.add(new Card(Suits.getSuit(suit), magnitude));
             changePlayerPoints(connection);
             if (gameNumber > GAMES_COUNT) {
                 state = States.FINISHED;
@@ -125,7 +125,6 @@ public class GameState {
                 gameNumber++;
                 circleNumber = 1;
                 handOutCards(playersWithCards.keySet().stream().toList(), new Deck());
-                bribe.clear();
             } else {
                 circleNumber++;
             }
@@ -281,5 +280,11 @@ public class GameState {
     public void setDoublePlayers() {
         doublePlayers = new ArrayList<>(playersWithCards.keySet());
         doublePlayers.addAll(playersWithCards.keySet());
+    }
+
+    public void clearBribe() {
+        if (playerNumTurn == 1) {
+            bribe.clear();
+        }
     }
 }

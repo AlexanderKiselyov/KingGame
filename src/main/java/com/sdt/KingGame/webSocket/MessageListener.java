@@ -91,6 +91,7 @@ public class MessageListener {
                 currentGameSession.setFinishedState();
             }
             messageGenerator.generateMessage(currentGameSession);
+            currentState.clearBribe();
             if (currentState.getStateValue() == States.FINISHED) {
                 gameSessions.remove(currentGameSession);
             }
