@@ -124,16 +124,15 @@ public class GameState {
     }
 
     public void changeState(int playerId, String suit, int magnitude, Connection connection) throws SQLException {
+        if (gameNumber > GAMES_COUNT) {
+            state = States.FINISHED;
+            return;
+        }
         Statement statement = connection.createStatement();
         statement.executeUpdate("INSERT INTO turns(game_session_id, game_number, circle_number, player_id, suit, magnitude) VALUES (" + turnsPK.getGameSessionId() + ", " + gameNumber + ", " + circleNumber + ", " + playerId + ", '" + suit + "', " + magnitude + ")");
-
         bribe.add(new Card(Suits.getSuit(suit), magnitude));
         if (Objects.equals(playerNumTurn, WebSocketHandler.getPlayersCount())) {
             changePlayerPoints(connection);
-            if (gameNumber > GAMES_COUNT) {
-                state = States.FINISHED;
-                return;
-            }
             if (Objects.equals(circleNumber, MAX_CARDS_NUMBER)) {
                 gameNumber++;
                 circleNumber = 1;
