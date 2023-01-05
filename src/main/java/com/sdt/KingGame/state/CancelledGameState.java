@@ -19,6 +19,7 @@ public class CancelledGameState extends GameState {
         this.playersWithCards = state.playersWithCards;
         this.doublePlayers = state.doublePlayers;
         this.playerTurn = state.playerTurn;
+        this.lastStartedCirclePlayer = state.playerTurn;
         this.state = States.CANCELLED;
         cancelledBy = state.getPlayersWithCards().keySet().iterator().next().getId();
     }

@@ -19,6 +19,7 @@ public class FinishedGameState extends GameState {
         this.playersWithCards = state.playersWithCards;
         this.doublePlayers = state.doublePlayers;
         this.playerTurn = state.playerTurn;
+        this.lastStartedCirclePlayer = state.playerTurn;
         this.state = States.FINISHED;
         winner = state.getPlayersWithCards().keySet().iterator().next().getId();
     }

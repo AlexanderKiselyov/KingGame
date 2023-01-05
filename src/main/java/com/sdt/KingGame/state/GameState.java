@@ -59,6 +59,7 @@ public class GameState {
     Map<Player, List<Card>> playersWithCards;
     List<Player> doublePlayers;
     private final GameTurnsPK turnsPK;
+    Integer lastStartedCirclePlayer;
     private static final Logger LOGGER = LoggerFactory.getLogger(GameState.class);
 
     public GameState(List<Player> players, Deck deck, GameTurnsPK turnsPK) {
@@ -68,6 +69,7 @@ public class GameState {
         playersWithCards = new LinkedHashMap<>();
         handOutCards(players, deck);
         playerTurn = randomTurn(players);
+        lastStartedCirclePlayer = playerTurn;
         this.turnsPK = turnsPK;
         bribe = new ArrayList<>();
     }
@@ -83,7 +85,18 @@ public class GameState {
     }
 
     private Integer nextTurn(Player player) {
-        return doublePlayers.get(doublePlayers.indexOf(player) + 1).getId();
+        if (circleNumber == 1 && playerNumTurn == 1) {
+            Player lastStartedPlayer = null;
+            for (Player doublePlayer : doublePlayers) {
+                if (doublePlayer.getId() == lastStartedCirclePlayer) {
+                    lastStartedPlayer = doublePlayer;
+                    break;
+                }
+            }
+            return doublePlayers.get(doublePlayers.indexOf(lastStartedPlayer) + 1).getId();
+        } else {
+            return doublePlayers.get(doublePlayers.indexOf(player) + 1).getId();
+        }
     }
 
     public Integer getGameNumber() {
