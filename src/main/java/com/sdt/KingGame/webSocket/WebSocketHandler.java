@@ -3,8 +3,11 @@ package com.sdt.KingGame.webSocket;
 import com.badlogic.gdx.utils.Array;
 import com.sdt.KingGame.game.GameSession;
 import com.sdt.KingGame.game.Player;
+import com.sdt.KingGame.util.MessageGenerator;
 import com.sdt.KingGame.util.PauseMaker;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -36,6 +39,8 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
     private final MessageListener messageListener = new MessageListener();
     private final Queue<Player> queueSession = new ConcurrentLinkedQueue<>();
     private final Map<GameSession, PauseMaker> pausedGames = new ConcurrentHashMap<>();
+    private final MessageGenerator messageGenerator = new MessageGenerator();
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketHandler.class);
     private Connection connection;
 
     public WebSocketHandler() throws ClassNotFoundException {
@@ -44,6 +49,11 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
                 if (System.currentTimeMillis() - PAUSE_WAITING_MILLIS > pausedGame.getValue().getPauseTime()) {
                     pausedGame.getKey().setCancelledState(pausedGame.getValue().getPausedBy());
                     pausedGames.remove(pausedGame.getKey());
+                    try {
+                        messageGenerator.generateMessage(pausedGame.getKey());
+                    } catch (IOException e) {
+                        LOGGER.error("Cannot send message: " + e);
+                    }
                 }
             }
         };
