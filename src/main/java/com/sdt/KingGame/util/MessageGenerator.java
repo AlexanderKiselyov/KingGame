@@ -26,7 +26,8 @@ import java.util.Map;
 public class MessageGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageGenerator.class);
 
-    public MessageGenerator() {}
+    public MessageGenerator() {
+    }
 
     public void generateMessage(GameSession gameSession) throws IOException {
         GameState state = gameSession.getState();
