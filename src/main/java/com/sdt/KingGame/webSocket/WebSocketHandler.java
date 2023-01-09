@@ -1,9 +1,13 @@
 package com.sdt.KingGame.webSocket;
 
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.JsonReader;
-import com.badlogic.gdx.utils.JsonValue;
-import com.sdt.KingGame.repository.ClientRepository;
+import com.sdt.KingGame.game.GameSession;
+import com.sdt.KingGame.game.Player;
+import com.sdt.KingGame.util.MessageGenerator;
+import com.sdt.KingGame.util.PauseMaker;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -11,65 +15,87 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class WebSocketHandler extends AbstractWebSocketHandler {
-    private final static Integer PLAYERS_CNT = 2;
-    private Long currentGameNumber = System.currentTimeMillis();
+    private final static Integer PLAYERS_CNT = 4;
+    private final static Long PAUSE_WAITING_MILLIS = 180000L;
     private final Array<WebSocketSession> sessions = new Array<>();
-    private final Map<Long, WebSocketSession> gameSessions = new HashMap<>();
-    private final Queue<WebSocketSession> queueSession = new LinkedBlockingQueue<>(PLAYERS_CNT);
-    private ConnectListener connectListener = new ConnectListener();
-    private DisconnectListener disconnectListener = new DisconnectListener();
-    private MessageListener messageListener = new MessageListener();
-    private final ClientRepository clientRepository;
-    private final JsonReader reader = new JsonReader();
+    private final List<GameSession> gameSessions = new LinkedList<>();
+    private final ConnectListener connectListener = new ConnectListener();
+    private final DisconnectListener disconnectListener = new DisconnectListener();
+    private final MessageListener messageListener = new MessageListener();
+    private final Queue<Player> queueSession = new ConcurrentLinkedQueue<>();
+    private final Map<GameSession, PauseMaker> pausedGames = new ConcurrentHashMap<>();
+    private final MessageGenerator messageGenerator = new MessageGenerator();
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketHandler.class);
+    private Connection connection;
 
-
-    public WebSocketHandler(ClientRepository clientRepository) {
-        this.clientRepository = clientRepository;
+    public WebSocketHandler() throws ClassNotFoundException {
+        Runnable task = () -> {
+            for (Map.Entry<GameSession, PauseMaker> pausedGame : pausedGames.entrySet()) {
+                if (System.currentTimeMillis() - PAUSE_WAITING_MILLIS > pausedGame.getValue().getPauseTime()) {
+                    pausedGame.getKey().setCancelledState(pausedGame.getValue().getPausedBy());
+                    pausedGames.remove(pausedGame.getKey());
+                    try {
+                        messageGenerator.generateMessage(pausedGame.getKey());
+                    } catch (IOException e) {
+                        LOGGER.error("Cannot send message: " + e);
+                    }
+                }
+            }
+        };
+        ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(1);
+        scheduledExecutorService.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS);
+        Class.forName("org.postgresql.Driver");
     }
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws IOException {
+    public void afterConnectionEstablished(WebSocketSession session) throws IOException, SQLException {
         synchronized (sessions) {
+            if (sessions.size == 0) {
+                connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/KingGame","root", "root");
+            }
             sessions.add(session);
             connectListener.handle(session);
         }
     }
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
-        String payload = message.getPayload();
-        JsonValue jsonValue = reader.parse(payload);
-        messageListener.handle(session, jsonValue, clientRepository);
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) {
+        messageListener.handle(session, new JSONObject(message.getPayload()), queueSession, gameSessions, PLAYERS_CNT, pausedGames, connection);
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws SQLException {
         synchronized (sessions) {
             sessions.removeValue(session, true);
-            disconnectListener.handle(session);
+            for (Player player : queueSession) {
+                if (player.getSession() == session) {
+                    queueSession.remove(player);
+                    break;
+                }
+            }
+            disconnectListener.handle(session, gameSessions);
+            if (sessions.size == 0) {
+                connection.close();
+            }
         }
     }
 
-    public Array<WebSocketSession> getSessions() {
-        return sessions;
-    }
-
-    public void setConnectListener(ConnectListener connectListener) {
-        this.connectListener = connectListener;
-    }
-
-    public void setDisconnectListener(DisconnectListener disconnectListener) {
-        this.disconnectListener = disconnectListener;
-    }
-
-    public void setMessageListener(MessageListener messageListener) {
-        this.messageListener = messageListener;
+    public static Integer getPlayersCount() {
+        return PLAYERS_CNT;
     }
 }
