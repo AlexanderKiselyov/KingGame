@@ -27,3 +27,6 @@ jobs:
 
       - name: Run a build
         run: mvn -B package --file pom.xml
+
+      - name: Run tests
+        run: mvn test
