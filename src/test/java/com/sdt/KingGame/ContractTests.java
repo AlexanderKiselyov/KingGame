@@ -1,19 +1,13 @@
 package com.sdt.KingGame;
 
-import com.sdt.KingGame.util.MessageGenerator;
 import com.sdt.KingGame.util.TestClient;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ContractTests {
 	private static final int CLIENTS_COUNT = 4;
 	private List<TestClient> testClients;
-	Logger LOGGER = LoggerFactory.getLogger(ContractTests.class);
 
 	@BeforeAll
 	static void beforeAll() {
@@ -63,23 +56,13 @@ class ContractTests {
 	}
 
 	@Test
-	void generateCancelledMessageTest() {
-		MessageGenerator messageGenerator = new MessageGenerator();
+	void pauseTest() {
 		for (TestClient client : testClients) {
 			client.sendMessage("{\"session_id\":" + client.getSessionId() + ",\"player_name\":" + client.getName() + ",\"action\":\"play\"}");
 		}
-		try {
-			messageGenerator.generateCancelledMessage(testClients.get(0).getSession());
-		} catch (IOException e) {
-			LOGGER.error("Cannot send message: " + e);
-		}
+		testClients.get(0).sendMessage("{\"game_session_id\":" + testClients.get(0).getGameSessionId() + ",\"player_id\":" + testClients.get(0).getPlayerId() + ",\"action\":\"pause\"}");
 		for (TestClient client : testClients) {
-			try {
-				JSONObject message = new JSONObject(client.getLastMessage());
-				assertThat(message).isEqualTo(new JSONObject("\\{\"game_state\":\\{\"state\":\"cancelled\"\\}\\}"));
-			} catch (JSONException e) {
-				LOGGER.error("Cannot convert to JSON: " + e);
-			}
+			assertThat(client.getLastMessage().replace("\n", "").replaceAll("\\s+", "")).matches("\\{\"game_state\":\\{\"players\":\\[\\{\"player_id\":[0-9]+,\"player_name\":\"[A-Za-z0-9]+\",\"points\":0\\},\\{\"player_id\":[0-9]+,\"player_name\":\"[A-Za-z0-9]+\",\"points\":0\\},\\{\"player_id\":[0-9]+,\"player_name\":\"[A-Za-z0-9]+\",\"points\":0\\},\\{\"player_id\":[0-9]+,\"player_name\":\"[A-Za-z0-9]+\",\"points\":0\\}\\],\"game_num\":1,\"circle_num\":1,\"state\":\"paused\",\"paused_by\":[0-9]+\\},\"game_session_id\":[0-9]+\\}");
 		}
 	}
 }

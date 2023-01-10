@@ -145,14 +145,12 @@ public class MessageListener {
 
     private GameSession getGameSession(JSONObject jsonValue, List<GameSession> gameSessions) {
         Long gameSessionId = jsonValue.getLong("game_session_id");
-        GameSession currentGameSession = null;
         for (GameSession gameSession : gameSessions) {
             if (Objects.equals(gameSession.getGameSessionId(), gameSessionId)) {
-                currentGameSession = gameSession;
-                continue;
+                return gameSession;
             }
-            LOGGER.error("No such game session id found: " + gameSessionId);
         }
-        return currentGameSession;
+        LOGGER.error("No such game session id found: " + gameSessionId);
+        return null;
     }
 }

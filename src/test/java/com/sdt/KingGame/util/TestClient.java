@@ -1,5 +1,6 @@
 package com.sdt.KingGame.util;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -22,6 +23,8 @@ public class TestClient {
     private WebSocketSession session;
     private String connectionMessage;
     private String lastMessage;
+    private Integer player_id;
+    private Long game_session_id;
     Logger LOGGER = LoggerFactory.getLogger(TestClient.class);
 
     public TestClient(String name) {
@@ -34,6 +37,11 @@ public class TestClient {
                     JSONObject receivedMessage = new JSONObject(message.getPayload());
                     if (receivedMessage.isNull("session_id")) {
                         lastMessage = message.getPayload();
+                        game_session_id = receivedMessage.getLong("game_session_id");
+                        JSONObject gameState = receivedMessage.getJSONObject("game_state");
+                        JSONArray players = gameState.getJSONArray("players");
+                        JSONObject player1 = players.getJSONObject(0);
+                        player_id = player1.getInt("player_id");
                     } else {
                         session_id = receivedMessage.getString("session_id");
                     }
@@ -67,6 +75,15 @@ public class TestClient {
     public WebSocketSession getSession() {
         return session;
     }
+
+    public Integer getPlayerId() {
+        return player_id;
+    }
+
+    public Long getGameSessionId() {
+        return game_session_id;
+    }
+
     public void sendMessage(String message) {
         try {
             session.sendMessage(new TextMessage(message));
